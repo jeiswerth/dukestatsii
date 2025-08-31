@@ -3,6 +3,7 @@ title: "Stats II: Homework 01"
 author: "Jerry Eiswerth"
 date: today
 format: html
+embed-resources: true
 ---
 
 ```{r, label = "preamble", message = FALSE, warning = FALSE}
