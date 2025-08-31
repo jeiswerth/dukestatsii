@@ -1,5 +1,5 @@
 ---
-title: "Stats II: Homework 1"
+title: "Stats II: Homework 01"
 author: "Jerry Eiswerth"
 format: html
 ---
