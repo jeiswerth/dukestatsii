@@ -1,6 +1,7 @@
 ---
 title: "Stats II: Homework 01"
 author: "Jerry Eiswerth"
+date: today
 format: html
 ---
 
