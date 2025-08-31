@@ -66,7 +66,7 @@ Because we are comparing the performance of both US and Kenyan runners, we want 
 
 ```{r}
 # Load the data
-d <- readRDS("nyc_marathon.RDS")
+d <- readRDS("../homework_01_files/data/nyc_marathon.RDS")
 
 # Plot the distribution
 p <- ggplot(data = d,
