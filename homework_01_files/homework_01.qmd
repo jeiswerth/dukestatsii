@@ -2,8 +2,9 @@
 title: "Stats II: Homework 01"
 author: "Jerry Eiswerth"
 date: today
-format: html
-embed-resources: true
+format: 
+  html:
+    self-contained: true
 ---
 
 ```{r, label = "preamble", message = FALSE, warning = FALSE}
