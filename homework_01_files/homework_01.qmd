@@ -61,7 +61,7 @@ print(paste0("P(Kenya | Top10) = P(Top10, Keyna)/P(Top10) = ", p_kenya_given_top
 
 ### (d)
 
-Because we are comparing the performance of both US and Kenyan runners, we want to how likely a runner from either team is to be in the top 10. Therefore, it's sensible to look at the conditional probability of being in the top 10 given they are either from Kenya or USA: $P(Top10 | Kenya)$ and $P(Top10 | USA)$. This way we are evaluating the team based on how many spots in the top 10 they place. If we were to instead condition on being in the top 10 such as $P(Kenya | Top10)$, this calculation would make the two teams look more similar in their performance, despite the USA having many more runners than Kenya.
+Because we are comparing the performance of both US and Kenyan runners, we want to know how likely a runner from either team is to be in the top 10. Therefore, it's sensible to look at the conditional probability of being in the top 10 given they are either from Kenya or USA: $P(Top10 | Kenya)$ and $P(Top10 | USA)$. This way we are evaluating the team based on how likely a top 10 placement is given the runner's team. If we were to instead condition on being in the top 10 such as $P(Kenya | Top10)$, this calculation would make the two teams look more similar in their performance, despite the USA having many more runners than Kenya. Alternatively, we could also look at $P($~$Top10 | Kenya)$ and $P($~$Top10 | USA)$ which would let us compare the performance based on how unlikely a top 10 placement is given the runner's team.
 
 ## Question 2
 
@@ -81,7 +81,7 @@ p <- ggplot(data = d,
 p
 ```
 
-The distribution's overall outline is somewhat bell-shaped, so it looks almost normally distributed. However, the right tail is quite long, with many outliers that have very long finish times. This probably reflects amateurs, people who became injured but still wanted to finish, and other runners who are much slower than the typical runner. The distribution also has a bi-modal section at the peak. I would guess this is the difference between the professional men and women runners as the women tend to have slightly longer average finish times.
+The distribution's overall outline is somewhat bell-shaped, so it looks almost normally distributed. However, the right tail is quite long, with many outliers that have very long finish times. This could reflect amateurs, people who became injured but still wanted to finish, and other runners who are much slower than the typical runner. The distribution also has a bi-modal section at the peak. I would guess this is the difference between the typical men and women runners as the women tend to have slightly longer average finish times. 
 
 ### (b)
 
@@ -110,11 +110,11 @@ out <- lm(time_seconds ~ age, data = sample500)
 summary(out)
 ```
 
-The coefficient on age is 66.45, which means that the model predicts an increase in finish time of 66.45 seconds on average when age increases by 1. The interpretation for the intercept term is the predicted finish time when age equals 0, which is 13603.41 seconds. This is not very informative given that runners cannot have an age of zero, but we need an intercept term when predicting the line of best fit in OLS.
+The coefficient on age is 66.45, which means that the model predicts an increase in finish time of 66.45 seconds on average when age increases by 1. The interpretation for the intercept term is the predicted finish time when age equals 0, which is 13603.41 seconds. This term is not very informative given that runners cannot have an age of zero, but we need an intercept term when predicting the line of best fit in OLS.
 
 ### (d)
 
-Given our model, \$y_i = \\beta_0 + \\beta_1 x_i + u_i\$, the model predicts the following:
+Given our model, $y_i = \beta_0 + \beta_1 x_i + u_i$, the model predicts the following:
 
 ```{r}
 # Extract terms from the model
@@ -153,10 +153,10 @@ model_colors <- RColorBrewer::brewer.pal(3, "PRGn")
 # Plot the data
 p3 <- ggplot() +
   geom_point(data = sample500,
-             alpha = 0.3,
              aes(y = time_seconds,
                  x = age,
-                 color = "Full Sample Obs.")) +
+                 color = "Full Sample Obs."),
+                 alpha = 1) +
   geom_smooth(data = d,
               method = "lm",
               se = FALSE,
@@ -174,7 +174,7 @@ p3 <- ggplot() +
                   x = age,
                   color = "500 Sample OLS")) +
   labs(title = "2024 NYC Marathon Finishing Time in Seconds",
-       subtitle = "By Age",
+       subtitle = "By Age, with Model Fit Comparisons",
        y = "Finishing Time (Seconds)",
        x = "Age",
        caption = "Source: Joe Hovde") +
@@ -211,15 +211,18 @@ coefficients <- coefficients[-1, ] |>
 p4 <- ggplot(data = coefficients,
              aes(x = age)) +
   geom_histogram(bins=150) +
-  geom_vline(xintercept=65.26,
-             color = "red") +
-    labs(title = "Age Regression Coefficients",
-       subtitle = "From 2500 samples",
-       y = "Count",
-       x = "Age Regression Coefficient",
-       caption = "Source: Joe Hovde")
+  geom_vline(aes(xintercept=65.26,
+             color = "Full Sample Age Coefficient")) +
+  theme(legend.position = "top") +
+  scale_color_manual(name = "Legend",
+                     values = c("Full Sample Age Coefficient" = "red")) +
+  labs(title = "Age Regression Coefficients from Linear Regressions on Samples Size N=500",
+      subtitle = "From 2500 Samples",
+      y = "Count",
+      x = "Age Regression Coefficient",
+      caption = "Source: Joe Hovde")
 p4
 
 ```
 
-We observe that with repeated samples, the estimated coefficient values tend to roughly follow a normal distribution. I assume that as we take even more samples, the distribution will become closer to normally distributed. The plot above displays a bell-shaped distribution centered around the mean full sample coefficient value of 65.26.
+We observe that with repeated samples, the estimated coefficient values tend to roughly follow a normal distribution. I assume that as we take even more samples, the distribution will continue to converge to a normal distribution centered around the full sample coefficient on age. The plot above displays a bell-shaped distribution centered around the mean full sample coefficient value of 65.26.
