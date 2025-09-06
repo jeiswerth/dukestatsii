@@ -54,32 +54,21 @@ sd1 <- 1
 
 Now, let's build the simulated dataset and assign treatment:
 ```{r}
-# I am randomly assigning half the students to each group,
-# so rather than assigning treatment with probability 0.5, 
-# I ensure the even split when sampling.
-treatment <- sample(rep(c(0, 1), each = N/2))
-
-# Let's draw the quiz 1 values from the normal distribution
-quiz1 <- rnorm(N, mean = mu, sd = sd)
-
-# Draw the error terms from the normal distribution
-u0 <- rnorm(N, mean = mu1, sd = sd1)
-u1 <- rnorm(N, mean = mu1, sd = sd1)
-
-# Now create the potential outcome values
-y0 = beta0 + beta1*quiz1 + u0
-y1 = beta0 + beta1*quiz1 + delta + u1
-
-# Turn these values into a dataframe
-d <- data.frame(student = 1:N,
-                treatment = treatment,
-                quiz1 = quiz1,
-                y0 = y0,
-                y1 = y1)
-
-# Create a column for the realized outcome
-d <- d |> 
-  mutate(quiz2 = ifelse(treatment == 1, y1, y0))
+d <- tibble(student = 1:N) |> 
+  # I am randomly assigning half the students to each group,
+  # so rather than assigning treatment with probability 0.5, 
+  # I ensure the even split when sampling.
+  mutate(treated = sample(rep(c(0, 1), each = N/2)),
+         # Let's draw the quiz 1 values from the normal distribution
+         quiz1 = rnorm(N, mean = mu, sd = sd),
+         # Draw the error terms from the normal distribution
+         u0 = rnorm(N, mean = mu1, sd = sd1),
+         u1 = rnorm(N, mean = mu1, sd = sd1),
+         # Now create the potential outcome values
+         y0 = beta0 + beta1*quiz1 + u0,
+         y1 = beta0 + beta1*quiz1 + delta + u1,
+         # Create a column for the realized outcome
+         quiz2 = ifelse(treated == 1, y1, y0))
 ```
 
 
@@ -101,7 +90,7 @@ For $\beta_1, u_0 = 0$, $y^1=\beta_0 + \delta = \beta_0 + 5$
 p <- ggplot(data = d, 
             aes(x = quiz1,
                 y = quiz2,
-                color = factor(treatment))) +
+                color = factor(treated))) +
   geom_point() + 
   geom_abline(intercept = beta0, slope = beta1, color = "red") +
   geom_abline(intercept = beta0 + delta, slope = beta1, color = "blue") +
@@ -109,7 +98,7 @@ p <- ggplot(data = d,
        x = "Quiz 1 Score",
        y = "Quiz 2 Score") +
   scale_color_manual(values = c("red", "blue"),
-                     labels = c("Control", "Treatment"),
+                     labels = c("Control", "Treated"),
                      name = "Treatment Status") +
   theme(legend.position = "top")
 p
@@ -125,21 +114,153 @@ I interpet $\beta_1$ to be the marginal effect of quiz 1 scores on the predicted
 # Because we randomly assigned half the class to each
 # treatment status, we know the proportion of each group
 # is 0.5.
-SATE <- d |> 
-  group_by(treatment) |> 
+sate_df <- d |> 
+  group_by(treated) |> 
   summarize(e_y0 = mean(y0),
             e_y1 = mean(y1)) |> 
-  mutate(CATE = e_y1 - e_y0) |> 
-  summarise(SATE = sum(0.5 * CATE))
+  mutate(cate = e_y1 - e_y0) |> 
+  summarise(sate = sum(0.5 * cate))
 
 # Extract from dataframe
-SATE <- SATE |> pull(SATE)
+sate <- sate_df |> pull(sate)
 
 # Compare to the population ATE
-print(paste0("SATE = ", SATE))
-print(paste0("Difference between the SATE and the PATE:", SATE - delta))
+print(paste0("SATE = ", sate))
+print(paste0("Difference between the SATE and the PATE:", sate - delta))
 ```
 
 The $SATE$ is slightly different from $\delta$, but the magnitude of the difference is very small. We can attribute this difference to the unobserved error terms present in the data generating process, which create variation in the potential outcomes.
 
 ### (b)
+```{r}
+sate_hat_df <- d |> 
+  group_by(treated) |> 
+  summarize(e_y = sum(quiz2)/n()) |> 
+  mutate(treated = paste0("e_y", treated)) |> 
+  pivot_wider(names_from = treated, values_from = e_y) |> 
+  mutate(sate_hat = e_y1 - e_y0)
+
+# Extract from dataframe
+sate_hat <- sate_hat_df |> pull(sate_hat)
+
+print(paste0("SATE_hat = ", sate_hat))
+print(paste0("SATE_hat - SATE = ", sate_hat - sate))
+```
+
+Yes, the difference between the $SATE$ and $\widehat{SATE}$ is ~1.36. The estimator $\widehat{SATE}$ is calculated based on the observed, realized outcomes, not both potential outcomes. In contrast, the $SATE$ is calculated using both potential outcomes. Thus, the two measures give us different values. Our simulation also introduced a certain amount of unobserved noise in the error terms, which contributes to the difference in the two values.
+
+### (c)
+```{r}
+# Create 500 samples
+sate_hat_draws <- replicate(500, {
+  # Reassign treatment
+  treated <- sample(rep(c(0, 1), each = N/2))
+  # Calculate observed outcome
+  quiz2 = ifelse(treated == 1, d$y1, d$y0)
+  # Calculate difference in means
+  mean(quiz2[treated == 1]) - mean(quiz2[treated == 0])
+})
+
+# Turn into a tibble to use for the plot
+sate_hat_draws_df <- tibble(draw = 1:500, sate_hat = sate_hat_draws)
+
+# Add the mean to the dataframe
+# (it will give the same value to all observations, but is
+# useful for representing the mean graphically)
+sate_hat_draws_df <- sate_hat_draws_df |> 
+  mutate(mean = mean(sate_hat))
+
+# Plot the coefficients
+p2 <- ggplot(data = sate_hat_draws_df,
+             aes(x = sate_hat)) +
+  geom_histogram(bins=80) +
+  geom_vline(aes(xintercept = 5,
+             color = "Delta = PATE")) +
+  geom_vline(aes(xintercept = 5.0493539,
+             color = "SATE")) +
+  geom_vline(aes(xintercept = mean,
+             color = "Mean of 500 SATE Draws")) +
+  theme(legend.position = "top") +
+  scale_color_manual(name = "Legend",
+                     values = c("Delta = PATE" = "red", "SATE" = "blue", "Mean of 500 SATE Draws" = "green")) +
+  labs(title = "Estimates of the Sample Average Treatment Effect",
+      subtitle = "From 500 Samples",
+      y = "Count",
+      x = "Estimated Sample Average Treatment Effect")
+p2
+```
+
+```{r}
+print(paste0("Mean of 500 estimated SATE draws: ", mean(sate_hat_draws_df$sate_hat)))
+print(paste0("Standard deviation of 500 estimated SATE draws: ", sd(sate_hat_draws_df$sate_hat)))
+```
+
+### (d)
+```{r}
+# Regression 1 - excluding quiz 1 scores
+out <- lm(quiz2 ~ treated, data = d)
+summary(out)
+```
+
+```{r}
+# Regression 2 - including quiz 1 scores
+out2 <- lm(quiz2 ~ treated + quiz1, data = d)
+summary(out2)
+```
+
+When we don't control for quiz 1 scores, the regression doesn't account for the fact that students who score higher on quiz 1 are likely to also score higher on quiz 2. Rather, it only uses the treatment variable as a predictor, and naively assumes that variation in quiz 1 scores is grouped into the error term. 
+
+If we control for quiz 1 scores as in regression 2, the regression accounts for both treatment and quiz 1 scores in the prediction, reducing variance and producing results that are less noisy and closer to the true value of $\widehat{SATE}$ (4.90507 compared to 5.04935 when holding quiz 1 scores constant).
+
+### (e)
+```{r}
+# Create 500 samples
+sate_hat_draws2 <- replicate(500, {
+  # Reassign treatment
+  treated <- sample(rep(c(0, 1), each = N/2))
+  # Calculate observed outcome
+  quiz2 = ifelse(treated == 1, d$y1, d$y0)
+  # Use a temporary dataframe to store values
+  temp <- data.frame(quiz2, treated, quiz1 = d$quiz1)
+  # Run regression on the subsample
+  out <- lm(quiz2 ~ treated + quiz1, data = temp)
+  # Extract coefficients
+  coef(out)
+})
+
+# Turn into a tibble to use for the plot
+sate_hat_draws2_df <- as.data.frame(t(sate_hat_draws2))
+
+# Add the mean to the dataframe
+# (it will give the same value to all observations, but is
+# useful for representing the mean graphically)
+sate_hat_draws2_df <- sate_hat_draws2_df |> 
+  mutate(mean = mean(treated))
+
+# Plot the coefficients
+p3 <- ggplot(data = sate_hat_draws2_df,
+             aes(x = treated)) +
+  geom_histogram(bins=80) +
+  geom_vline(aes(xintercept = 5,
+             color = "Delta = PATE")) +
+  geom_vline(aes(xintercept = 5.0493539,
+             color = "SATE")) +
+  geom_vline(aes(xintercept = mean,
+             color = "Mean of 500 Regression Coefficients")) +
+  theme(legend.position = "top") +
+  scale_color_manual(name = "Legend",
+                     values = c("Delta = PATE" = "red", "SATE" = "blue", "Mean of 500 Regression Coefficients" = "green")) +
+  labs(title = "Estimates of the Sample Average Treatment Effect",
+      subtitle = "From 500 Samples, Using Regressions",
+      y = "Count",
+      x = "Estimated Sample Average Treatment Effect")
+p3
+```
+
+```{r}
+print(paste0("Mean of 500 estimated SATE from regressions: ", mean(sate_hat_draws2_df$treated)))
+print(paste0("Standard deviation of 500 estimated SATE from regressions: ", sd(sate_hat_draws2_df$treated)))
+```
+
+Now, we compare the distribution from using regressions with the quiz 1 scores as a predictor and the simple difference in means:
+Our true $SATE$ is 5.04935. Using the difference in means, the mean $\widehat{SATE}=5.0198$ and standard deviation = $0.6274$. Whereas, using the regression with quiz 1 controls gives mean $\widehat{SATE}=5.0413$ and standard deviation = $0.1503$. Clearly, when we control for quiz 1 scores, we see a smaller variance and more precise estimates. As such, the regression with control method is preferred.
