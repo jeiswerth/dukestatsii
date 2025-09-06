@@ -1,0 +1,145 @@
+---
+title: "Stats II: Homework 02"
+author: "Jerry Eiswerth"
+date: today
+format: 
+  html:
+    self-contained: true
+---
+
+```{r, label = "preamble", message = FALSE, warning = FALSE}
+library(tidyverse)
+set.seed(1)
+```
+
+## Question 1
+
+### (a)
+
+$ATE=\delta=5$  
+```{r}
+delta <- 5
+```
+
+### (b)
+
+$N=100$
+```{r}
+N <- 100
+```
+
+### (c)
+
+$Quiz_1$ ~ $N(65, 3)$
+```{r}
+mu <- 65
+sd <- 3
+```
+
+
+### (d)
+
+Potential Outcomes for $Quiz_2$:
+$$y^0=\beta_0+\beta_1x+u_0=y^0=10+1.1x+u_0$$
+$$y^1=\beta_0+\beta_1x+\delta+u_1=y^1=10+1.1x+\delta+u_1$$
+$$u_0, u_1 \sim N(0,1)$$
+```{r}
+beta0 <- 10
+beta1 <- 1.1
+mu1 <- 0
+sd1 <- 1
+```
+
+### (e)
+
+Now, let's build the simulated dataset and assign treatment:
+```{r}
+# I am randomly assigning half the students to each group,
+# so rather than assigning treatment with probability 0.5, 
+# I ensure the even split when sampling.
+treatment <- sample(rep(c(0, 1), each = N/2))
+
+# Let's draw the quiz 1 values from the normal distribution
+quiz1 <- rnorm(N, mean = mu, sd = sd)
+
+# Draw the error terms from the normal distribution
+u0 <- rnorm(N, mean = mu1, sd = sd1)
+u1 <- rnorm(N, mean = mu1, sd = sd1)
+
+# Now create the potential outcome values
+y0 = beta0 + beta1*quiz1 + u0
+y1 = beta0 + beta1*quiz1 + delta + u1
+
+# Turn these values into a dataframe
+d <- data.frame(student = 1:N,
+                treatment = treatment,
+                quiz1 = quiz1,
+                y0 = y0,
+                y1 = y1)
+
+# Create a column for the realized outcome
+d <- d |> 
+  mutate(quiz2 = ifelse(treatment == 1, y1, y0))
+```
+
+
+## (2)
+
+### (a)
+$\delta$ represents the average treatment effect on the treated, meaning that on average, students who received the treatment (an extra tutoring session) are expected to have 5 points higher on quiz 2 than if they had not been treated.
+
+### (b)
+The intercept for $y^0$ is the expected value for the untreated when the quiz 1 score and the error term are both zero.
+$y^0$: $\beta_0 + \beta_1x + u_0$
+For $\beta_1, u_0 = 0$, $y^0=\beta_0$
+
+The intercept for $y^1$ is the expected value for the treated when the quiz 1 score and the error term are both zero. I interpret this to mean that regardless of the quiz 1 scores and unobserved errors, treatment increases the baseline quiz score by 5 points on average. Graphically, this results in the regression line vertically shifting upwards by 5 points (see Figure 1 below).
+$y^1$: $\beta_0 + \beta_1x + \delta + u_0$
+For $\beta_1, u_0 = 0$, $y^1=\beta_0 + \delta = \beta_0 + 5$
+
+```{r}
+p <- ggplot(data = d, 
+            aes(x = quiz1,
+                y = quiz2,
+                color = factor(treatment))) +
+  geom_point() + 
+  geom_abline(intercept = beta0, slope = beta1, color = "red") +
+  geom_abline(intercept = beta0 + delta, slope = beta1, color = "blue") +
+  labs(title = "Figure 1: Intercept Differences for Potential Outcomes",
+       x = "Quiz 1 Score",
+       y = "Quiz 2 Score") +
+  scale_color_manual(values = c("red", "blue"),
+                     labels = c("Control", "Treatment"),
+                     name = "Treatment Status") +
+  theme(legend.position = "top")
+p
+```
+
+### (c)
+I interpet $\beta_1$ to be the marginal effect of quiz 1 scores on the predicted value of both $y^0$ and $y^1$. This means that given a 1-point increase in quiz 1 score, I expect on average for the quiz 2 score to increase by 1.1 points, regardless of the treatment status.
+
+## (3)
+
+### (a)
+```{r}
+# Because we randomly assigned half the class to each
+# treatment status, we know the proportion of each group
+# is 0.5.
+SATE <- d |> 
+  group_by(treatment) |> 
+  summarize(e_y0 = mean(y0),
+            e_y1 = mean(y1)) |> 
+  mutate(CATE = e_y1 - e_y0) |> 
+  summarise(SATE = sum(0.5 * CATE))
+
+# Extract from dataframe
+SATE <- SATE |> pull(SATE)
+
+# Compare to the population ATE
+print(paste0("SATE = ", SATE))
+print(paste0("Difference between the SATE and the PATE:", SATE - delta))
+```
+
+The $SATE$ is slightly different from $\delta$, but the magnitude of the difference is very small. We can attribute this difference to the unobserved error terms present in the data generating process, which create variation in the potential outcomes.
+
+### (b)
