@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jerry Eiswerth">
-<meta name="dcterms.date" content="2025-09-06">
+<meta name="dcterms.date" content="2025-09-10">
 
 <title>Stats II: Homework 02</title>
 <style>
@@ -3245,7 +3245,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 6, 2025</p>
+      <p class="date">September 10, 2025</p>
     </div>
   </div>
   
@@ -3287,7 +3287,7 @@ window.Quarto = {
 </section>
 <section id="d" class="level3">
 <h3 class="anchored" data-anchor-id="d">(d)</h3>
-<p>Potential Outcomes for <span class="math inline">\(Quiz_2\)</span>: <span class="math display">\[y^0=\beta_0+\beta_1x+u_0=y^0=10+1.1x+u_0\]</span> <span class="math display">\[y^1=\beta_0+\beta_1x+\delta+u_1=y^1=10+1.1x+\delta+u_1\]</span> <span class="math display">\[u_0, u_1 \sim N(0,1)\]</span></p>
+<p>Potential Outcomes for <span class="math inline">\(Quiz_2\)</span>: <span class="math display">\[y^0=\beta_0+\beta_1x+u_0=10+1.1x+u_0\]</span> <span class="math display">\[y^1=\beta_0+\beta_1x+\delta+u_1=y^1=10+1.1x+\delta+u_1\]</span> <span class="math display">\[u_0, u_1 \sim N(0,1)\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>beta0 <span class="ot">&lt;-</span> <span class="dv">10</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>beta1 <span class="ot">&lt;-</span> <span class="fl">1.1</span></span>
@@ -3321,12 +3321,13 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="section">(2)</h2>
 <section id="a-1" class="level3">
 <h3 class="anchored" data-anchor-id="a-1">(a)</h3>
-<p><span class="math inline">\(\delta\)</span> represents the average treatment effect on the treated, meaning that on average, students who received the treatment (an extra tutoring session) are expected to have 5 points higher on quiz 2 than if they had not been treated.</p>
+<p><span class="math inline">\(ATE=E[Y^1 -Y^0]=\delta\)</span> represents the average treatment effect, which is the expected difference in potential outcomes if a student was treated vs. not treated, averaged across the entire class. We can also interpret this as the average effect of an extra tutoring session on quiz 2 scores if all students received the extra tutoring session compared to if no students received the extra tutoring session. This means that if every student received the treatment (an extra tutoring session), we would expect them to receive 5 points higher on quiz 2 than if they had not been treated. In this example, the class also represents the population, so we can also interpret <span class="math inline">\(\delta\)</span> as the population average treatment effect (PATE).</p>
 </section>
 <section id="b-1" class="level3">
 <h3 class="anchored" data-anchor-id="b-1">(b)</h3>
-<p>The intercept for <span class="math inline">\(y^0\)</span> is the expected value for the untreated when the quiz 1 score and the error term are both zero. <span class="math inline">\(y^0\)</span>: <span class="math inline">\(\beta_0 + \beta_1x + u_0\)</span> For <span class="math inline">\(\beta_1, u_0 = 0\)</span>, <span class="math inline">\(y^0=\beta_0\)</span></p>
-<p>The intercept for <span class="math inline">\(y^1\)</span> is the expected value for the treated when the quiz 1 score and the error term are both zero. I interpret this to mean that regardless of the quiz 1 scores and unobserved errors, treatment increases the baseline quiz score by 5 points on average. Graphically, this results in the regression line vertically shifting upwards by 5 points (see Figure 1 below). <span class="math inline">\(y^1\)</span>: <span class="math inline">\(\beta_0 + \beta_1x + \delta + u_0\)</span> For <span class="math inline">\(\beta_1, u_0 = 0\)</span>, <span class="math inline">\(y^1=\beta_0 + \delta = \beta_0 + 5\)</span></p>
+<p>The intercept for <span class="math inline">\(y^0\)</span> is the expected value for the untreated when the quiz 1 score and the error term are both zero. <span class="math display">\[y^0=\beta_0 + \beta_1x + u_0\]</span> For <span class="math inline">\(x, u_0 = 0\)</span>, <span class="math display">\[y^0=\beta_0\]</span></p>
+<p>The intercept for <span class="math inline">\(y^1\)</span> is the expected value for the treated when the quiz 1 score and the error term are both zero. I interpret this to mean that regardless of the quiz 1 scores and unobserved errors, treatment increases the baseline quiz score by 5 points on average. Graphically, this results in the regression line vertically shifting upwards by 5 points (see Figure 1 below, ignoring the actual slopes).</p>
+<p><span class="math display">\[y^1=\beta_0 + \beta_1x + \delta + u_1\]</span> For <span class="math inline">\(x, u_1 = 0\)</span>, <span class="math display">\[y^1=\beta_0 + \delta = \beta_0 + 5\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> d, </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>            <span class="fu">aes</span>(<span class="at">x =</span> quiz1,</span>
@@ -3524,7 +3525,7 @@ F-statistic:  1004 on 2 and 97 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </div>
 <p>When we don’t control for quiz 1 scores, the regression doesn’t account for the fact that students who score higher on quiz 1 are likely to also score higher on quiz 2. Rather, it only uses the treatment variable as a predictor, and naively assumes that variation in quiz 1 scores is grouped into the error term.</p>
-<p>If we control for quiz 1 scores as in regression 2, the regression accounts for both treatment and quiz 1 scores in the prediction, reducing variance and producing results that are less noisy and closer to the true value of <span class="math inline">\(\widehat{SATE}\)</span> (4.90507 compared to 5.04935 when holding quiz 1 scores constant).</p>
+<p>If we control for quiz 1 scores as in regression 2, the regression accounts for both treatment and quiz 1 scores in the prediction, reducing variance and producing results that are less noisy and closer to the true value of <span class="math inline">\(\widehat{SATE}\)</span> (4.90507 compared to 5.04935 when holding quiz 1 scores constant). This is true because quiz 1 scores are highly predictive of quiz 2 scores bases on our data-generating process.</p>
 </section>
 <section id="e-1" class="level3">
 <h3 class="anchored" data-anchor-id="e-1">(e)</h3>

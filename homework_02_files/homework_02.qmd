@@ -40,7 +40,7 @@ sd <- 3
 ### (d)
 
 Potential Outcomes for $Quiz_2$:
-$$y^0=\beta_0+\beta_1x+u_0=y^0=10+1.1x+u_0$$
+$$y^0=\beta_0+\beta_1x+u_0=10+1.1x+u_0$$
 $$y^1=\beta_0+\beta_1x+\delta+u_1=y^1=10+1.1x+\delta+u_1$$
 $$u_0, u_1 \sim N(0,1)$$
 ```{r}
@@ -75,16 +75,19 @@ d <- tibble(student = 1:N) |>
 ## (2)
 
 ### (a)
-$\delta$ represents the average treatment effect on the treated, meaning that on average, students who received the treatment (an extra tutoring session) are expected to have 5 points higher on quiz 2 than if they had not been treated.
+$ATE=E[Y^1 -Y^0]=\delta$ represents the average treatment effect, which is the expected difference in potential outcomes if a student was treated vs. not treated, averaged across the entire class. We can also interpret this as the average effect of an extra tutoring session on quiz 2 scores if all students received the extra tutoring session compared to if no students received the extra tutoring session. This means that if every student received the treatment (an extra tutoring session), we would expect them to receive 5 points higher on quiz 2 than if they had not been treated. In this example, the class also represents the population, so we can also interpret $\delta$ as the population average treatment effect (PATE).
 
 ### (b)
 The intercept for $y^0$ is the expected value for the untreated when the quiz 1 score and the error term are both zero.
-$y^0$: $\beta_0 + \beta_1x + u_0$
-For $\beta_1, u_0 = 0$, $y^0=\beta_0$
+$$y^0=\beta_0 + \beta_1x + u_0$$
+For $x, u_0 = 0$, 
+$$y^0=\beta_0$$
 
-The intercept for $y^1$ is the expected value for the treated when the quiz 1 score and the error term are both zero. I interpret this to mean that regardless of the quiz 1 scores and unobserved errors, treatment increases the baseline quiz score by 5 points on average. Graphically, this results in the regression line vertically shifting upwards by 5 points (see Figure 1 below).
-$y^1$: $\beta_0 + \beta_1x + \delta + u_0$
-For $\beta_1, u_0 = 0$, $y^1=\beta_0 + \delta = \beta_0 + 5$
+The intercept for $y^1$ is the expected value for the treated when the quiz 1 score and the error term are both zero. I interpret this to mean that regardless of the quiz 1 scores and unobserved errors, treatment increases the baseline quiz score by 5 points on average. Graphically, this results in the regression line vertically shifting upwards by 5 points (see Figure 1 below, ignoring the actual slopes).
+
+$$y^1=\beta_0 + \beta_1x + \delta + u_1$$
+For $x, u_1 = 0$, 
+$$y^1=\beta_0 + \delta = \beta_0 + 5$$
 
 ```{r}
 p <- ggplot(data = d, 
@@ -210,7 +213,7 @@ summary(out2)
 
 When we don't control for quiz 1 scores, the regression doesn't account for the fact that students who score higher on quiz 1 are likely to also score higher on quiz 2. Rather, it only uses the treatment variable as a predictor, and naively assumes that variation in quiz 1 scores is grouped into the error term. 
 
-If we control for quiz 1 scores as in regression 2, the regression accounts for both treatment and quiz 1 scores in the prediction, reducing variance and producing results that are less noisy and closer to the true value of $\widehat{SATE}$ (4.90507 compared to 5.04935 when holding quiz 1 scores constant).
+If we control for quiz 1 scores as in regression 2, the regression accounts for both treatment and quiz 1 scores in the prediction, reducing variance and producing results that are less noisy and closer to the true value of $\widehat{SATE}$ (4.90507 compared to 5.04935 when holding quiz 1 scores constant). This is true because quiz 1 scores are highly predictive of quiz 2 scores bases on our data-generating process.
 
 ### (e)
 ```{r}
