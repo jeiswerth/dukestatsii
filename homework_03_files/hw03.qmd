@@ -107,7 +107,7 @@ Now the parameter of interest has changed - we wanted to estimate the ATT for al
 
 ## (6)
 
-The ATC and ATT differ in which group we use to as the base group and which one we use to construct the counterfactual. 
+The ATC and ATT differ in which group we use to as the base group and which one we use to construct the counterfactual.
 
 The ATT is trying to find the average treatment effect for the group that was treated. We can also look at the ATE as the effect of taking away treatment for the treated groups $E[Y^1 - Y^0 | T = 1]$. We know $Y^1$, so we need to find control matches that were untreated that act as the counterfactual $Y^0$.
 
@@ -215,7 +215,6 @@ Based on the love plot and the balance table, age, re74, and re75 are not balanc
 ```{r}
 print(paste0("The ATT is ", M$est))
 ```
-
 
 ## (4)
 
