@@ -1,10 +1,10 @@
 ---
 title: "Homework 03"
 author: "Jerry Eiswerth"
-date: "September 30, 2025"
-format:
+date: today
+format: 
   html:
-    embed-resources: true
+    self-contained: true
 ---
 
 ```{r, warning = FALSE, message = FALSE}
@@ -228,6 +228,7 @@ ps_model <- glm(treat ~ age + educ + black + hisp + marr + nodegree + re74 + re7
   family = binomial
 )
 
+# Propensity Scores
 d$ps <- predict(ps_model, type = "response")
 ```
 
