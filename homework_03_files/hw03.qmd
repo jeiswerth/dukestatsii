@@ -1,10 +1,12 @@
 ---
 title: "Homework 03"
+author: "Jerry Eiswerth"
+date: "September 30, 2025"
 format: html
 editor: visual
 ---
 
-```{r}
+```{r, warning = FALSE, message = FALSE}
 library(tidyverse)
 library(here)
 library(Matching)
@@ -85,7 +87,7 @@ When we do exact matching, we have to find potential control units that have the
 
 ## (4)
 
-(d) is the main downside of using propensity score matching instead of other matching methods. If we misspecify the model that estimates our propensity score, then our matches may have more bias than other matching methods and not close the back door. For example, we may incorrectly assume a linear functional form between a covariate and the treatment which is not representative of the true relationship (rather than a functional form with a higher order polynomial).
+\(d\) is the main downside of using propensity score matching instead of other matching methods. If we misspecify the model that estimates our propensity score, then our matches may have more bias than other matching methods and not close the back door. For example, we may incorrectly assume a linear functional form between a covariate and the treatment which is not representative of the true relationship (rather than a functional form with a higher order polynomial).
 
 ## (5)
 
