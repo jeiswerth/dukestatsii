@@ -13,7 +13,6 @@ library(here)
 library(Matching)
 library(MatchIt)
 library(cobalt)
-options(scipen = 999)
 ```
 
 # Part (1)
