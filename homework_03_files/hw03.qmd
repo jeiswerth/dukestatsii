@@ -1,18 +1,16 @@
 ---
 title: "Homework 03"
-author: "Jerry Eiswerth"
-date: today
-format: 
-  html:
-    self-contained: true
+format: html
+editor: visual
 ---
 
-```{r, warning = FALSE, message = FALSE}
+```{r}
 library(tidyverse)
 library(here)
 library(Matching)
 library(MatchIt)
 library(cobalt)
+options(scipen = 999)
 ```
 
 # Part (1)
@@ -87,7 +85,7 @@ When we do exact matching, we have to find potential control units that have the
 
 ## (4)
 
-\(d\) is the main downside of using propensity score matching instead of other matching methods. If we misspecify the model that estimates our propensity score, then our matches may have more bias than other matching methods and not close the back door. For example, we may incorrectly assume a linear functional form between a covariate and the treatment which is not representative of the true relationship (rather than a functional form with a higher order polynomial).
+(d) is the main downside of using propensity score matching instead of other matching methods. If we misspecify the model that estimates our propensity score, then our matches may have more bias than other matching methods and not close the back door. For example, we may incorrectly assume a linear functional form between a covariate and the treatment which is not representative of the true relationship (rather than a functional form with a higher order polynomial).
 
 ## (5)
 
@@ -228,7 +226,6 @@ ps_model <- glm(treat ~ age + educ + black + hisp + marr + nodegree + re74 + re7
   family = binomial
 )
 
-# Propensity Scores
 d$ps <- predict(ps_model, type = "response")
 ```
 
