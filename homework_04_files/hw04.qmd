@@ -1,12 +1,13 @@
 ---
 title: "Homework 04"
-format: html
 author: "Jerry Eiswerth"
 date: today
-editor: visual
+format: 
+  html:
+    self-contained: true
 ---
 
-```{r, warning = FALSE}
+```{r, message = FALSE, warning = FALSE}
 library(tidyverse)
 library(marginaleffects)
 library(fixest)
