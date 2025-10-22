@@ -5,6 +5,7 @@ date: today
 format: 
   html:
     self-contained: true
+    embed-resources: true
 ---
 
 ```{r, message = FALSE, warning = FALSE}
@@ -200,7 +201,7 @@ p <- ggplot(data = d2,
 p
 ```
 
-We can see from the plot that the variance of the error term changes across the fitted values - it's small at low fitted values and increases at higher fitted values. It seems there is likely some level of heteroskedasticity.
+From the plot we can see that the variance of the error term changes across the fitted values - it's small at low fitted values and increases at higher fitted values. It seems there is likely some level of heteroskedasticity.
 
 ```{r}
 out4 <- feols(humid ~ temp,
@@ -230,6 +231,7 @@ The model predicts a 5.65% increase in humidity on average from a 1 degree incre
 ## (5)
 
 From the plot in (3), the relationship does not look linear, and the pattern in the variance is changing with the residuals - and we can investigate further. If we look at the plot of humidity on temp, it clearly looks exponential.
+
 ```{r}
 p2 <- ggplot(data = d2,
             aes(x = temp,
