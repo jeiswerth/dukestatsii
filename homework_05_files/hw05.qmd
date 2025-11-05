@@ -14,6 +14,7 @@ library(lme4)
 library(performance)
 library(here)
 library(parameters)
+library(ggeffects)
 ```
 
 ## (Preliminaries)
@@ -36,7 +37,6 @@ p <- ggplot(data = d,
                  binwidth = 1,
                  color = "white") +
   labs(title = "Distribution of ppltrust")
-
 p
 ```
 
@@ -46,20 +46,29 @@ The modal value of ppltrst is 5.
 
 ```{r}
 d2 <- d |> 
-  group_by(country)
+  group_by(cntry)
 
 p2 <- ggplot(data = d,
-             aes(x = ppltrst, group = country, color = country)) +
+             aes(x = ppltrst, group = cntry, color = cntry)) +
   geom_density() + 
-  scale_color_viridis_c(option = "mako") +
+  scale_color_viridis_d(option = "mako") +
   labs(title = "Distribution of ppltrust by Country")
-
 p2
 ```
 
 ```{r}
+p3 <- ggplot(data = d,
+             aes(x = ppltrst, color = cntry)) +
+  geom_histogram() + 
+  scale_color_viridis_d(option = "mako") +
+  labs(title = "Distribution of ppltrust by Country") +
+  facet_wrap(~cntry)
+p3
+```
+
+```{r}
 d2 <- d |> 
-  group_by(country) |> 
+  group_by(cntry) |> 
   summarize(mean = mean(ppltrst),
             N = n())
 
@@ -69,7 +78,6 @@ p3 <- ggplot(data = d2,
                  binwidth = 1,
                  color = "white") +
   labs(title = "Distribution of Country Means of ppltrust")
-  
 p3
 ```
 
@@ -80,7 +88,7 @@ The countries with the most observations have values closer to the modal value 5
 ### (4)
 
 ```{r}
-m0 <- lmer(ppltrst ~ 1 + (1 | country), data = d, REML = FALSE)
+m0 <- lmer(ppltrst ~ 1 + (1 | cntry), data = d, REML = FALSE)
 summary(m0)
 ```
 
@@ -120,7 +128,7 @@ Although the estimates between the partial pooling and full pooling are similar,
 ```{r}
 # Observed Means
 d3 <- d |> 
-  group_by(country) |> 
+  group_by(cntry) |> 
   summarise(mean = mean(ppltrst))
 
 # Predicted Means
@@ -131,7 +139,7 @@ d3 <- d3 |>
 print(d3, n = Inf)
 ```
 
-Country 8 has the highest estimated trust (6.68), and country 3 has the lowest estimated trust (3.46).
+Country 8 (Denmark) has the highest estimated trust (6.68), and country 3 (Bulgaria) has the lowest estimated trust (3.46).
 
 ```{r}
 rand_ints = as.data.frame(ranef(m0, condVar = TRUE))
@@ -160,29 +168,29 @@ d5 <- d |>
   mutate(eduyrs1 = (eduyrs / 20))
 summary(d5$eduyrs1)
 
-m2 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 | country), data = d5, REML = FALSE)
+m2 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 | cntry), data = d5, REML = FALSE)
 parameters::model_parameters(m2)
 ```
 
-The expected effect of moving from the lowest observed educated country to the highest is roughly 1.64 higher ppltrst.
+The expected effect of moving from the lowest observed educated cntry to the highest is roughly 1.64 higher ppltrst.
 
 ### (11)
 
 ```{r}
 pred_df <- expand_grid(
   eduyrs1 = seq(0,1,.1),
-  country = levels(factor(d5$country))) 
+  cntry = levels(factor(d5$cntry))) 
 
 pred_df <- pred_df |> 
   mutate(pred = predict(m2, newdata = pred_df))
 
 ggplot() +
   geom_smooth(data = pred_df,
-              aes(x = eduyrs1, y = pred, group = country, color = country),
+              aes(x = eduyrs1, y = pred, group = cntry, color = cntry),
               method = "lm", alpha = 0.5, se = FALSE) +
   geom_jitter(data = d5, 
               aes(x = eduyrs1, y = ppltrst), alpha = 0.1) +
-  labs(title = "Predicted ppltrst vs. Education, by Country",
+  labs(title = "Predicted ppltrst vs. Education, by country",
        x = "Education (0-1 scale)",
        y = "Predicted ppltrst")
 ```
@@ -190,7 +198,7 @@ ggplot() +
 ### (12)
 
 ```{r}
-m3 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 + eduyrs1 | country), data = d5, REML = FALSE)
+m3 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 + eduyrs1 | cntry), data = d5, REML = FALSE)
 parameters::model_parameters(m3)
 
 pred_df <- pred_df |> 
@@ -198,11 +206,11 @@ pred_df <- pred_df |>
 
 ggplot() +
   geom_smooth(data = pred_df,
-              aes(x = eduyrs1, y = pred, group = country, color = country),
+              aes(x = eduyrs1, y = pred, group = cntry, color = cntry),
               method = "lm", alpha = 0.5, se = FALSE) +
   geom_jitter(data = d5, 
               aes(x = eduyrs1, y = ppltrst), alpha = 0.1) +
-  labs(title = "Predicted ppltrst vs. Education, by Country",
+  labs(title = "Predicted ppltrst vs. Education, by country",
        x = "Education (0-1 scale)",
        y = "Predicted ppltrst")
 ```
@@ -226,33 +234,14 @@ summary(d6$agea1)
 summary(d6$attend1)
 summary(d6$health1)
 
-m4 <- lmer(ppltrst ~ 1 + eduyrs1 + agea1 + I(agea1^2) + attend1 + health1 + female + (1 | country), data = d6, REML = FALSE)
+m4 <- lmer(ppltrst ~ 1 + eduyrs1 + agea1 + I(agea1^2) + attend1 + health1 + female + (1 | cntry), data = d6, REML = FALSE)
 parameters::model_parameters(m4)
 
-means <- d6 |> 
-  summarize(eduyrs1 = mean(eduyrs1),
-            attend1 = mean(attend1),
-            health1 = mean(health1),
-            female = mean(female))
-
-grid <- expand_grid(
-  agea1 = seq(0, 1, 0.1),
-  eduyrs1 = means$eduyrs1,
-  attend1 = means$attend1,
-  health1 = means$health1,
-  female = means$female,
-  country = levels(factor(d6$country)))
-
-grid$prediction <- predict(m4, newdata = grid)
-
-ggplot() +
-  geom_smooth(data = grid,
-              aes(x = agea1, y = prediction, color = country, group = country),
-              method = "lm", alpha = 0.5, se = FALSE) +
-  geom_jitter(data = d6, 
-              aes(x = agea1, y = ppltrst), alpha = 0.1) +
-  labs(title = "Predicted ppltrst vs. Age, by Country",
-       x = "Age (0-1 scale)",
-       y = "Predicted ppltrst")
+ggeffect(m4, terms = "agea1") |> 
+  plot() +
+  labs(x = "Age (0-1 range)",
+    y = "ppltrst",
+    title = "Effect of Age on Predicted Value of ppltrst"
+    )
 ```
 
