@@ -1,0 +1,257 @@
+---
+title: "Homework 05"
+format: html
+author: "Jerry Eiswerth"
+date: today
+editor: visual
+---
+
+```{r, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(lme4)
+library(performance)
+library(here)
+library(parameters)
+```
+
+## (Preliminaries)
+
+### (1)
+
+```{r}
+d <- readRDS(here("homework_05_files", "ess5000.rds"))
+
+psych::describe(d)
+```
+
+ppltrst has a mean of 4.87 and a variance of $2.36^2=5.57$.
+
+### (2)
+
+```{r}
+p <- ggplot(data = d,
+            aes(x = ppltrst)) +
+  geom_histogram(bins = 10,
+                 binwidth = 1,
+                 color = "white") +
+  labs(title = "Distribution of ppltrust")
+
+p
+```
+
+The modal value of ppltrst is 5.
+
+### (3)
+
+```{r}
+d2 <- d |> 
+  group_by(country)
+
+p2 <- ggplot(data = d,
+             aes(x = ppltrst, group = country, color = country)) +
+  geom_density() + 
+  scale_color_viridis_c(option = "mako") +
+  labs(title = "Distribution of ppltrust by Country")
+
+p2
+```
+
+```{r}
+d2 <- d |> 
+  group_by(country) |> 
+  summarize(mean = mean(ppltrst),
+            N = n())
+
+p3 <- ggplot(data = d2,
+             aes(x = mean)) +
+  geom_histogram(bins = 10,
+                 binwidth = 1,
+                 color = "white") +
+  labs(title = "Distribution of Country Means of ppltrust")
+  
+p3
+```
+
+The countries with the most observations have values closer to the modal value 5. The countries with the smallest sample sizes make up most of the values far from 5. Most likely with partial pooling, the country means will shrink to become closer to 5. Countries with the smaller sample sizes will be the ones that have larger shrinkages toward 5.
+
+## (Single Dimension)
+
+### (4)
+
+```{r}
+m0 <- lmer(ppltrst ~ 1 + (1 | country), data = d, REML = FALSE)
+summary(m0)
+```
+
+### (5)
+
+```{r}
+print(paste0("ICC:", 0.8744/(0.8744+5.1737)))
+```
+
+### (6)
+
+```{r}
+performance::icc(m0)
+```
+
+Yes, the results from performance are very close to the manual calculation.
+
+### (7)
+
+This ICC means that roughly 14.5% of the variance in ppltrst is between countries, and the rest of the variance is within countries.
+
+### (8)
+
+```{r}
+m1 <- lm(ppltrst ~ 1,
+         data = d)
+summary(m1)
+
+compare_performance(m0, m1)
+print(paste0("Difference in BIC:", BIC(m0) - BIC(m1)))
+```
+
+Although the estimates between the partial pooling and full pooling are similar, the random intercepts have lower AIC, BIC, and RMSE, meaning random intercepts have a better model fit. Therefore the complexity of random intercepts is worth using.
+
+### (9)
+
+```{r}
+# Observed Means
+d3 <- d |> 
+  group_by(country) |> 
+  summarise(mean = mean(ppltrst))
+
+# Predicted Means
+d3 <- d3 |> 
+  mutate(pred_mean = predict(m0, newdata = d3)) |> 
+  arrange(desc(pred_mean))
+
+print(d3, n = Inf)
+```
+
+Country 8 has the highest estimated trust (6.68), and country 3 has the lowest estimated trust (3.46).
+
+```{r}
+rand_ints = as.data.frame(ranef(m0, condVar = TRUE))
+
+ggplot(rand_ints, aes(y = condval,x = grp)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = condval - 1.96*condsd,
+                    max = condval + 1.96*condsd), width = 0) +
+  labs(title = "EB est. of random component of intercept",
+       x = "Country Identifier",
+       y = "Estimate and 95% CI")
+```
+
+```{r}
+d3
+```
+
+We can see from the table that the predicted means shrink toward 5, and that the countries at the highest and lowest values of ppltrst tend to shrink more. The caterpillar plot shows narrow error bands for the countries with the largest sample size, and most are clustered close to the overall mean. Likewise, countries with smaller sample sizes have very large error bars, many of which overlap with the overall mean. This shows the previous predictions were accurate and that the small n countries are the most likely to be affected by shrinkage.
+
+## (Two Dimensions)
+
+### (10)
+
+```{r}
+d5 <- d |> 
+  mutate(eduyrs1 = (eduyrs / 20))
+summary(d5$eduyrs1)
+
+m2 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 | country), data = d5, REML = FALSE)
+parameters::model_parameters(m2)
+```
+
+The expected effect of moving from the lowest observed educated country to the highest is roughly 1.64 higher ppltrst.
+
+### (11)
+
+```{r}
+pred_df <- expand_grid(
+  eduyrs1 = seq(0,1,.1),
+  country = levels(factor(d5$country))) 
+
+pred_df <- pred_df |> 
+  mutate(pred = predict(m2, newdata = pred_df))
+
+ggplot() +
+  geom_smooth(data = pred_df,
+              aes(x = eduyrs1, y = pred, group = country, color = country),
+              method = "lm", alpha = 0.5, se = FALSE) +
+  geom_jitter(data = d5, 
+              aes(x = eduyrs1, y = ppltrst), alpha = 0.1) +
+  labs(title = "Predicted ppltrst vs. Education, by Country",
+       x = "Education (0-1 scale)",
+       y = "Predicted ppltrst")
+```
+
+### (12)
+
+```{r}
+m3 <- lmer(ppltrst ~ 1 + eduyrs1 + (1 + eduyrs1 | country), data = d5, REML = FALSE)
+parameters::model_parameters(m3)
+
+pred_df <- pred_df |> 
+  mutate(pred = predict(m3, newdata = pred_df))
+
+ggplot() +
+  geom_smooth(data = pred_df,
+              aes(x = eduyrs1, y = pred, group = country, color = country),
+              method = "lm", alpha = 0.5, se = FALSE) +
+  geom_jitter(data = d5, 
+              aes(x = eduyrs1, y = ppltrst), alpha = 0.1) +
+  labs(title = "Predicted ppltrst vs. Education, by Country",
+       x = "Education (0-1 scale)",
+       y = "Predicted ppltrst")
+```
+
+### (13)
+
+```{r}
+compare_performance(m2, m3)
+```
+
+No. The previous model with only random intercepts had a slightly better fit. This means that the slope of education does not vary that much across countries on average.
+
+### (14)
+
+```{r}
+d6 <- d5 |> 
+  mutate(agea1 = agea/101,
+         attend1 = attend/7,
+         health1 = health/5)
+summary(d6$agea1)
+summary(d6$attend1)
+summary(d6$health1)
+
+m4 <- lmer(ppltrst ~ 1 + eduyrs1 + agea1 + I(agea1^2) + attend1 + health1 + female + (1 | country), data = d6, REML = FALSE)
+parameters::model_parameters(m4)
+
+means <- d6 |> 
+  summarize(eduyrs1 = mean(eduyrs1),
+            attend1 = mean(attend1),
+            health1 = mean(health1),
+            female = mean(female))
+
+grid <- expand_grid(
+  agea1 = seq(0, 1, 0.1),
+  eduyrs1 = means$eduyrs1,
+  attend1 = means$attend1,
+  health1 = means$health1,
+  female = means$female,
+  country = levels(factor(d6$country)))
+
+grid$prediction <- predict(m4, newdata = grid)
+
+ggplot() +
+  geom_smooth(data = grid,
+              aes(x = agea1, y = prediction, color = country, group = country),
+              method = "lm", alpha = 0.5, se = FALSE) +
+  geom_jitter(data = d6, 
+              aes(x = agea1, y = ppltrst), alpha = 0.1) +
+  labs(title = "Predicted ppltrst vs. Age, by Country",
+       x = "Age (0-1 scale)",
+       y = "Predicted ppltrst")
+```
+
