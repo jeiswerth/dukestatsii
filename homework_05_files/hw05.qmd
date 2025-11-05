@@ -1,9 +1,11 @@
 ---
 title: "Homework 05"
-format: html
 author: "Jerry Eiswerth"
 date: today
-editor: visual
+format: 
+  html:
+    self-contained: true
+    embed-resources: true
 ---
 
 ```{r, message = FALSE, warning = FALSE}
@@ -20,7 +22,6 @@ library(parameters)
 
 ```{r}
 d <- readRDS(here("homework_05_files", "ess5000.rds"))
-
 psych::describe(d)
 ```
 
